@@ -28,7 +28,7 @@ export function useMovies({ search, sort }) {
   }, []);
 
   const sortedMovies = useMemo(() => {
-    sort ? [...movies].sort((a, b) => a.title.localeCompare(b.title)) : movies;
+    return sort ? [...movies].sort((a, b) => a.title.localeCompare(b.title)) : movies;
   }, [movies, sort]);
   // executes the function only when the movies or sort state changes with useMemo hook, which is a performance optimization
 

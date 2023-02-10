@@ -43,6 +43,7 @@ function App() {
     }, 300),
     [getMovies]
   );
+  // debouncedGetMovies is a function that is called only once every 300ms, debounce avoids calling the API too many times and search every time the user types a letter
 
   const handleSubmit = (event) => {
     event.preventDefault();
