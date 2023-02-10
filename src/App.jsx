@@ -1,7 +1,8 @@
 import "./App.css";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useMovies } from "./hooks/useMovies";
 import { Movies } from "./components/Movies";
+import debounce from "just-debounce-it";
 
 function useSearch() {
   const [search, updateSearch] = useState("");
@@ -14,7 +15,7 @@ function useSearch() {
       return;
     } // This is the first time the input is rendered and I avoid validating it and the error message
 
-    if (search === "") {
+    if (search.trim() === "") {
       setError("Please enter a search term");
       return;
     }
@@ -31,44 +32,62 @@ function useSearch() {
 }
 
 function App() {
+  const [sort, setSort] = useState(false);
+
   const { search, updateSearch, error } = useSearch();
-  const { movies } = useMovies({search});
-  
+  const { movies, loading, getMovies } = useMovies({ search, sort });
+
+  const debouncedGetMovies = useCallback(
+    debounce((search) => {
+      getMovies({ search });
+    }, 300),
+    [getMovies]
+  );
+
   const handleSubmit = (event) => {
     event.preventDefault();
-    console.log({ search });
+    getMovies({ search });
+  };
+
+  const handleSort = () => {
+    setSort(!sort);
   };
 
   const handleChange = (event) => {
     const newSearch = event.target.value;
     updateSearch(newSearch);
+    debouncedGetMovies(newSearch);
   };
 
   return (
     <div className="page">
       <header>
         <h1>Movie Browser</h1>
-        <form className="form">
+        <form className="form" onSubmit={handleSubmit}>
           <input
             name="query"
             onChange={handleChange}
             type="text"
+            value={search}
             placeholder="Avengers, Star Wars, The Matrix..."
+            style={{
+              border: "1px solid transparent",
+              borderColor: error ? "red" : "transparent",
+            }}
           />
-          <button onClick={handleSubmit} type="submit">
-            Search
-          </button>
+          <input type="checkbox" onChange={handleSort} checked={sort} />
+          <button type="submit">Search</button>
         </form>
         {error && (
-          <p style={{ color: "red", borderColor: error ? "red" : "transparent" }}>
+          <p
+            style={{ color: "red", borderColor: error ? "red" : "transparent" }}
+          >
             {error}
           </p>
         )}
       </header>
 
-      <main>
-        <Movies movies={movies} />
-      </main>
+      <main>{loading ? <p>Loading...</p> : <Movies movies={movies} />}</main>
     </div>
   );
 }
